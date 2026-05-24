@@ -4,21 +4,20 @@ My WezTerm, Neovim and Aerospace config
 
 ## Requirements
 
+- [Karabiner-Elements](https://karabiner-elements.pqrs.org/)
+- [Aerospace ](https://github.com/nickolay-krets/aerospace)
 - [WezTerm](https://wezterm.org/)
+- [Neovim ](https://neovim.io/)
+- [smart-splits.nvim](https://github.com/mrjones2014/smart-splits.nvim#install)
 - bash
 - [fzf ](https://github.com/junegunn/fzf)
-- [Neovim ](https://neovim.io/) (optional)
-- [smart-splits.nvim](https://github.com/mrjones2014/smart-splits.nvim#install) (optional)
-- [Aerospace ](https://github.com/nickolay-krets/aerospace) (optional)
 - [bat ](https://github.com/sharkdp/bat) (optional)
-
-There’s some MacOS / zsh specific stuff in here, but it shouldn’t be too hard to adapt.
 
 ## Features
 
 ### Seamless navigation between splits
 
-One set of keybinds moves between panes, Aerospace windows, Neovim windows
+One set of keybinds moves between Neovim windows, Wezterm panes, Aerospace windows 
 
 ### Opacity toggle
 
@@ -107,7 +106,13 @@ Install [smart-splits.nvim](https://github.com/mrjones2014/smart-splits.nvim#ins
 
 - Example config in `/nvim`
 
-Change Aerospace `Ctrl+HJKL` keybinds to something else, so WezTerm receives these.
+Disable Aerospace `Ctrl+HJKL` keybinds, Karabiner will handle window focus.
+
+- Example config in `/aerospace`
+
+Set up `CTRL+HJKL` in Karabiner Elements to change window focus if Wezterm is not the frontmost app, otherwise pass through.
+
+- Key modification in `karabiner`
 
 ## Keybinds
 
@@ -158,7 +163,7 @@ In theme picker:
 
 ### Navigation
 
-These keys are forwarded to Neovim when the active pane is running nvim, otherwise they navigate WezTerm panes. At the edge of the pane layout, focus moves to the neighboring Aerospace window.
+These keys are forwarded by Wezterm to Neovim when the active pane is running nvim, otherwise they navigate WezTerm panes. At the edge of the pane layout, focus moves to the neighboring Aerospace window. If Wezterm is *not* the active app, Karabiner handles window focus changes with the same `Ctrl+H/J/K/L` keybinds.
 
 
 | Keys | Action |
