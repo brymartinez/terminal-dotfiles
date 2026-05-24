@@ -1,4 +1,4 @@
-My WezTerm, Neovim and Aerospace config
+Fully seamless Aerospace + Wezterm + Neovim config.
 
 ![](screenshot.png)
 
