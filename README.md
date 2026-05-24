@@ -112,7 +112,7 @@ Disable Aerospace `Ctrl+HJKL` keybinds, Karabiner will handle window focus.
 
 Set up `CTRL+HJKL` in Karabiner Elements to change window focus if Wezterm is not the frontmost app, otherwise pass through.
 
-- Key modification in `karabiner`
+- Key modification in `/karabiner`
 
 ## Keybinds
 
