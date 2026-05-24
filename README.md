@@ -1,4 +1,4 @@
-Fully seamless Aerospace + Wezterm + Neovim config.
+Fully seamless Aerospace + Wezterm + Neovim config on MacOS.
 
 ![](screenshot.png)
 
