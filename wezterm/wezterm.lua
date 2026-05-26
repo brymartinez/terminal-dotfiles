@@ -48,7 +48,7 @@ config.set_environment_variables = {
 }
 
 config.enable_kitty_graphics = true -- view images in markdown (nvim)
-config.enable_kitty_keyboard = true -- needed for Pi agent
+config.enable_kitty_keyboard = false -- conflicts with CAPS->ESC remap
 
 -- Theme picker -----------------------------------------------------------
 local globals_path = wezterm.config_dir .. "/globals.lua"
