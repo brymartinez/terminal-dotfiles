@@ -5,7 +5,7 @@ Fully seamless Aerospace + Wezterm + Neovim config on MacOS.
 ## Requirements
 
 - [Karabiner-Elements](https://karabiner-elements.pqrs.org/)
-- [Aerospace ](https://github.com/nickolay-krets/aerospace)
+- [Aerospace ](https://github.com/nikitabobko/AeroSpace)
 - [WezTerm](https://wezterm.org/)
 - [Neovim ](https://neovim.io/)
 - [smart-splits.nvim](https://github.com/mrjones2014/smart-splits.nvim#install)
