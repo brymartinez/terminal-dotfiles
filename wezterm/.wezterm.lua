@@ -1,17 +1,39 @@
 local wezterm = require("wezterm")
 local act = wezterm.action
 local config = wezterm.config_builder()
+local is_macos = wezterm.target_triple:find("darwin") ~= nil
+local support_dir = wezterm.home_dir .. "/.config/wezterm"
+
+local function find_executable(name)
+	local candidates = {}
+	for dir in (os.getenv("PATH") or ""):gmatch("[^:]+") do
+		table.insert(candidates, dir .. "/" .. name)
+	end
+	if is_macos then
+		table.insert(candidates, "/opt/homebrew/bin/" .. name)
+		table.insert(candidates, "/usr/local/bin/" .. name)
+	end
+	for _, path in ipairs(candidates) do
+		local file = io.open(path, "r")
+		if file then
+			file:close()
+			return path
+		end
+	end
+	return nil
+end
+
+local aerospace_bin = is_macos and find_executable("aerospace") or nil
 
 -- wezterm.log_info("reloading")
 
 -- Preferences ------------------------------------------------------------
 config.font = wezterm.font_with_fallback({
-	"FiraCode Nerd Font",
-	"JetBrainsMono Nerd Font",
+	{ family = "Fira Code", weight = "Regular" },
 	"Symbols Nerd Font Mono",
-	"monospace",
 })
-config.font_size = 14
+config.font_size = 13
+config.harfbuzz_features = { "calt=1", "clig=1", "liga=1" }
 
 -- Window
 config.initial_cols = 120
@@ -21,12 +43,14 @@ config.adjust_window_size_when_changing_font_size = false
 config.window_close_confirmation = "NeverPrompt"
 config.window_decorations = "RESIZE"
 config.default_cursor_style = "SteadyBar"
+config.automatically_reload_config = true
+config.text_background_opacity = 0.3
 
 -- Opacity and desaturation
 local desaturate_inactive_panes = true -- sets initial desat_mode: true → "muted", false → "vibrant"
 local transparency_mode = "both" -- "both" | "inactive" | "none"
 config.macos_window_background_blur = 10
-local opacity_active_window = 0.97
+local opacity_active_window = 0.90
 local opacity_inactive_window = 0.88
 local desaturation_inactive_pane = 0.666
 local brightness_inactive_pane = 0.666
@@ -43,15 +67,16 @@ local new_pane_prog = { "/bin/zsh" }
 local shell_rc = wezterm.home_dir .. "/.zshrc.local"
 
 -- If using Homebrew, needed for shell cmds
+local path_prefix = is_macos and "/opt/homebrew/bin:/usr/local/bin:" or ""
 config.set_environment_variables = {
-	PATH = "/opt/homebrew/bin:" .. os.getenv("PATH"),
+	PATH = path_prefix .. (os.getenv("PATH") or ""),
 }
 
 config.enable_kitty_graphics = true -- view images in markdown (nvim)
 config.enable_kitty_keyboard = false -- conflicts with CAPS->ESC remap
 
 -- Theme picker -----------------------------------------------------------
-local globals_path = wezterm.config_dir .. "/globals.lua"
+local globals_path = support_dir .. "/globals.lua"
 local fallback_theme = "Catppuccin Mocha"
 local builtin_schemes = wezterm.color.get_builtin_schemes()
 
@@ -104,7 +129,6 @@ local function active_theme()
 end
 
 local function theme_switcher(window, pane)
-	local cfg_dir = wezterm.config_dir
 	local themes_file = "/tmp/wezterm_themes_" .. os.getenv("USER")
 
 	local f = io.open(themes_file, "w")
@@ -122,7 +146,7 @@ local function theme_switcher(window, pane)
 		act.SplitPane({
 			direction = "Right",
 			size = size,
-			command = { args = { "bash", cfg_dir .. "/theme_helper.sh", "pick", themes_file, shell_rc } },
+			command = { args = { "bash", support_dir .. "/theme_helper.sh", "pick", themes_file, shell_rc } },
 		}),
 		pane
 	)
@@ -173,9 +197,6 @@ local edit_config = act.SpawnCommandInNewTab({
 		string.format(
 			"sleep 0.1"
 				.. " && wezterm cli set-tab-title 'config'"
-				.. " && export $(grep '^export' "
-				.. shell_rc
-				.. " | xargs)"
 				.. " && if command -v chezmoi >/dev/null 2>&1;"
 				.. " then chezmoi edit --apply %q;"
 				.. " else ${EDITOR:-vi} %q; fi",
@@ -245,7 +266,9 @@ local function split_nav(resize_or_move, mods, key, dir)
 						end
 					end
 					if at_edge then
-						wezterm.run_child_process({ "/opt/homebrew/bin/aerospace", "focus", dir:lower() })
+						if aerospace_bin then
+							wezterm.run_child_process({ aerospace_bin, "focus", dir:lower() })
+						end
 					else
 						win:perform_action({ ActivatePaneDirection = dir }, pane)
 					end

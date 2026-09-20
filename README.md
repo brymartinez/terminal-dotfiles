@@ -1,185 +1,77 @@
-Fully seamless Aerospace + Wezterm + Neovim config on MacOS.
+# Terminal dotfiles
 
-![](screenshot.png)
+Portable Neovim, tmux, Zsh, and WezTerm configuration managed with GNU Stow.
 
-## Requirements
-
-- [Karabiner-Elements](https://karabiner-elements.pqrs.org/)
-- [Aerospace ](https://github.com/nikitabobko/AeroSpace)
-- [WezTerm](https://wezterm.org/)
-- [Neovim ](https://neovim.io/)
-- [smart-splits.nvim](https://github.com/mrjones2014/smart-splits.nvim#install)
-- bash
-- [fzf ](https://github.com/junegunn/fzf)
-- [bat ](https://github.com/sharkdp/bat) (optional)
-
-## Features
-
-### Seamless navigation between splits
-
-One set of keybinds moves between Neovim windows, Wezterm panes, Aerospace windows 
-
-### Opacity toggle
-
-Keybind to cycle:
-
-- All windows transparent, unfocused windows more so
-- Transparency only on unfocused windows
-- No transparency
-
-### Unfocused window / pane desaturation
-
-Toggle:
-
-- Desaturation of unfocused windows. Muted colors based on current theme
-
-In addition, desaturation of unfocused panes can be toggled in wezterm.lua
-
-### Theme picker for WezTerm, Neovim, bat
-
-Fuzzy theme picker:
-
-- Keybinds to filter dark/light themes
-- Live preview in all windows
-- Choosing a wezterm theme synchronizes to `bat` and `nvim`. 
-  - Updates env var exports BAT_THEME and NVIM_THEME in ~/.zshrc.local, changes applied after sourcing
-  - Only env vars already exported by `~/.zshrc.local` (configurable) are changed
-  - Mappings present for catppuccin, tokyonight and gruvbox. Other themes fall back to catppuccin
-- theme list is built dynamically (and filtered for duplicates) so it works with WezTerm nightly builds
-- Shell scripts (no lua dependency) with atomic writes to prevent race condition
-- Tab bar follows window styling
-
-Based on [wezthemes](https://github.com/CheikhNaro/wezthemes)
-
-### Misc
-
-Smart split: create a vertical or horizontal split depending on the current pane's shape.
-
-Smart split navigation: if in Neovim, pass commands through; otherwise navigate WezTerm panes. At the edge of the pane layout, falls through to Aerospace to focus the neighboring window.
-
-Keybind to open `wezterm.lua`: in [ chezmoi ](https://www.chezmoi.io/) if present, `$EDITOR` otherwise
+The base packages require GNU Stow, tmux, Zsh, and Neovim. fzf, LazyGit, Codex, WezTerm, and TPM are optional integrations used by the richer workflow.
 
 ## Install
 
-Copy `wezterm/*` to `~/.config/wezterm` 
+Install GNU Stow first, then run:
 
-### Optional:
-
-add to .zshrc:
-
-```bash
-if [ -f ~/.zshrc.local ]; then
-  source ~/.zshrc.local
-fi
-
-function _check_zshrc_local() {
-  [ ! -f ~/.zshrc.local ] && return
-  local mtime=$(stat -f %m ~/.zshrc.local)
-  if [[ $mtime != $_zshrc_local_mtime ]]; then
-    _zshrc_local_mtime=$mtime
-    source ~/.zshrc.local
-  fi
-}
-precmd_functions+=(_check_zshrc_local)
+```sh
+git clone <repository-url> ~/dotfiles
+cd ~/dotfiles
+./install.sh
+[ -e ~/.zshrc.local ] || cp zsh/.zshrc.local.example ~/.zshrc.local
 ```
 
-create or edit .zshrc.local:
+The installer links the portable packages into `$HOME`. On macOS it also links the optional Aerospace and Karabiner package. It never uses `stow --adopt`.
 
-```bash
-export NVIM_THEME=catppuccin
-export BAT_THEME="Catppuccin Mocha"
+Existing conflicting files are left untouched and reported by Stow. Preview the links with:
+
+```sh
+stow --simulate --restow --dir "$PWD" --target "$HOME" nvim tmux zsh wezterm bin
 ```
 
-Configure Neovim to use `$NVIM_THEME` (example for LazyVim):
+## Package layout
 
-```lua
--- ~/.config/nvim/lua/plugins/colorscheme.lua
-  {
-    "LazyVim/LazyVim",
-    opts = {
-      colorscheme = os.getenv("NVIM_THEME") or "tokyonight",
-    },
-  },
+- `nvim` links `~/.config/nvim`.
+- `tmux` links `~/.tmux.conf`.
+- `zsh` links `~/.zshrc`.
+- `wezterm` links `~/.wezterm.lua` and support files under `~/.config/wezterm`.
+- `macos` links Aerospace and Karabiner configuration on macOS only.
+- `bin` links helper commands under `~/.local/bin`.
+
+`~/.wezterm.lua` is the only WezTerm entrypoint. The files under `~/.config/wezterm` are support modules and scripts, not a second configuration entrypoint.
+
+## Local configuration
+
+Keep secrets, project aliases, theme overrides, and machine-specific paths in `~/.zshrc.local`. That file is ignored by Git. The tracked shell configuration only loads it when present.
+
+## Project workflow
+
+Create or switch to a project session with:
+
+```sh
+tmux-project ~/Documents/projects/example
 ```
 
-Install [smart-splits.nvim](https://github.com/mrjones2014/smart-splits.nvim#install)
+Running `tmux-project` without a path opens an fzf project picker. A new project session starts with:
 
-- Example config in `/nvim`
+- `edit` for the main Neovim instance.
+- `review` for a second Neovim instance in the same project.
+- `shell` for commands and logs.
 
-Disable Aerospace `Ctrl+HJKL` keybinds, Karabiner will handle window focus.
-
-- Example config in `/aerospace`
-
-Set up `CTRL+HJKL` in Karabiner Elements to change window focus if Wezterm is not the frontmost app, otherwise pass through.
-
-- Key modification in `/karabiner`
-
-## Keybinds
-
-Leader key is `mod+L` (timeout 2 s). 
-`mod` is `⌘+Shift` on macOS; `Ctrl+Shift` on Windows.
-
-### Features
-
+Inside tmux, use:
 
 | Keys | Action |
-|---|---|
-| `<leader>T` | Open theme picker |
-| `<leader>O` | Cycle opacity modes |
-| `<leader>D` | Toggle unfocused-window desaturation |
+| --- | --- |
+| `Ctrl-a f` | Project/session picker |
+| `Ctrl-a C` | Codex popup |
+| `Ctrl-a g` | LazyGit popup |
+| `Ctrl-h/j/k/l` | Move through Neovim and tmux panes |
+| `Ctrl-a r` | Reload tmux configuration |
 
+The existing Diffview and Git history mappings remain in Neovim. The `review` window starts in the same directory so it can be used as the persistent diff surface.
 
-In theme picker:
+To enable tmux plugins on a new machine, install TPM separately and press `Ctrl-a I` inside tmux. The base configuration remains usable without TPM.
 
+## Validation
 
-| Keys | Action |
-|---|---|
-| `Ctrl+T` | Cycle dark/light/all themes |
-| `Ctrl+J/K` | Line down/up |
-
-
-### Splits, Tabs & Windows
-
-
-| Keys | Action |
-|---|---|
-| `mod+Enter` | Smart split |
-| `mod+\|` | Split horizontal |
-| `mod+-` | Split vertical |
-| `<leader>R` | Rotate panes clockwise |
-| `⌘+T` | New tab |
-| `⌘+N` | New window |
-| `⌘+W` | Close current pane/tab/window |
-
-
-### Pane Selection & Zoom
-
-
-| Keys | Action |
-|---|---|
-| `<leader>S` | Pane select overlay |
-| `<leader>Z` | Toggle pane zoom |
-
-
-### Navigation
-
-These keys are forwarded by Wezterm to Neovim when the active pane is running nvim, otherwise they navigate WezTerm panes. At the edge of the pane layout, focus moves to the neighboring Aerospace window. If Wezterm is *not* the active app, Karabiner handles window focus changes with the same `Ctrl+H/J/K/L` keybinds.
-
-
-| Keys | Action |
-|---|---|
-| `Ctrl+H/J/K/L` | Move focus left / down / up / right |
-| `Ctrl+Arrow` | Resize pane in the arrow direction |
-
-
-Also works for `Ctrl+J` and `Ctrl+K` in theme picker, fzf.
-
-### Misc
-
-
-| Keys | Action |
-|---|---|
-| `⌘+,` | Edit wezterm.lua (via chezmoi) |
-| `Opt+←/→` | Jump word left / right |
-
-
+```sh
+sh -n install.sh
+zsh -n zsh/.zshrc
+tmux -L dotfiles-check -f tmux/.tmux.conf new-session -d -s dotfiles-check
+nvim --headless --clean -u nvim/.config/nvim/init.lua '+qa'
+tmux -L dotfiles-check kill-server 2>/dev/null || true
+```

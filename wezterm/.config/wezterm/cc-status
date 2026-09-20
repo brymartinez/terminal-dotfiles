@@ -1,0 +1,31 @@
+#!/bin/bash
+# Claude Code hook -> WezTerm tab title, replacing the iTerm2 cc-status utility.
+# Reads a Claude Code hook JSON payload on stdin and reflects session status
+# in the current WezTerm tab's title (and rings the bell when attention is needed).
+
+set -euo pipefail
+
+WEZTERM_BIN="wezterm"
+command -v wezterm >/dev/null 2>&1 || WEZTERM_BIN="/Applications/WezTerm.app/Contents/MacOS/wezterm"
+
+input="$(cat)"
+event="$(jq -r '.hook_event_name // empty' <<<"$input")"
+tool="$(jq -r '.tool_name // empty' <<<"$input")"
+
+bell=0
+case "$event" in
+	SessionStart) title="Claude ▶" ;;
+	UserPromptSubmit) title="Claude …" ;;
+	PreToolUse | PostToolUse) title="Claude ⚙ ${tool:-tool}" ;;
+	Notification) title="Claude 🔔" bell=1 ;;
+	PermissionRequest) title="Claude 🔒" bell=1 ;;
+	Stop | SubagentStop) title="Claude ✓" bell=1 ;;
+	StopFailure) title="Claude ✗" bell=1 ;;
+	SessionEnd) title="" ;;
+	*) title="Claude" ;;
+esac
+
+"$WEZTERM_BIN" cli set-tab-title "$title" >/dev/null 2>&1 || true
+[ "$bell" -eq 1 ] && printf '\a'
+
+exit 0
