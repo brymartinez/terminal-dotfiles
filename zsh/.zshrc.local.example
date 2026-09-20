@@ -1,0 +1,11 @@
+# Copy this file to ~/.zshrc.local. Keep the copy out of Git.
+
+# export GITHUB_TOKEN="..."
+# export NVIM_THEME="catppuccin"
+# export BAT_THEME="Catppuccin Mocha"
+# export WEZTERM_THEME="GruvboxDarkHard"
+
+# Optional local project helpers.
+# alias cdp='cd "$HOME/Documents/projects"'
+# alias cdpp='cd "$HOME/Documents/projects/personal"'
+# [[ -r "$HOME/Documents/projects/personal/aliases.zshrc" ]] && source "$HOME/Documents/projects/personal/aliases.zshrc"
