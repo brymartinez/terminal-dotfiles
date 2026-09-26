@@ -1,4 +1,4 @@
 return {
-    current_theme = "GruvboxDarkHard",
+    current_theme = "Dark+",
     preview_theme = nil,
 }

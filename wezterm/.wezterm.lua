@@ -47,11 +47,10 @@ config.automatically_reload_config = true
 config.text_background_opacity = 0.3
 
 -- Opacity and desaturation
-local desaturate_inactive_panes = true -- sets initial desat_mode: true → "muted", false → "vibrant"
+local desaturate_inactive_panes = false -- sets initial desat_mode: true → "muted", false → "vibrant"
 local transparency_mode = "both" -- "both" | "inactive" | "none"
 config.macos_window_background_blur = 10
 local opacity_active_window = 0.90
-local opacity_inactive_window = 0.88
 local desaturation_inactive_pane = 0.666
 local brightness_inactive_pane = 0.666
 local opacity_tab_bar = 0
@@ -409,47 +408,21 @@ local function apply_opacity(window)
 	local mode = wezterm.GLOBAL.transparency_mode or transparency_mode
 	local desat_mode = wezterm.GLOBAL.desat_mode or (desaturate_inactive_panes and "muted" or "vibrant")
 	local theme = active_theme()
-	if window:is_focused() then
-		overrides.window_background_opacity = (mode == "both") and opacity_active_window or opacity_max
-		overrides.colors = { tab_bar = make_tab_bar_colors(theme, overrides.window_background_opacity) }
-		overrides.inactive_pane_hsb = (
-			desaturate_inactive_panes
-			and desat_mode == "muted"
-			and globals.preview_theme == nil
-		)
-				and {
-					saturation = 1 - (desaturation_inactive_pane * 0.5),
-					brightness = brightness_inactive_pane,
-				}
-			or nil
-	else
-		overrides.window_background_opacity = (mode == "none") and opacity_max or opacity_inactive_window
-		local s = builtin_schemes[theme] or builtin_schemes[fallback_theme]
-		local desat = (desat_mode == "muted") and desaturation_inactive_pane or 0
-		local function desaturate_list(list)
-			if not list or desat == 0 then
-				return nil
-			end
-			local t = {}
-			for _, c in ipairs(list) do
-				table.insert(t, wezterm.color.parse(c):desaturate(desat))
-			end
-			return t
-		end
-		overrides.colors = {
-			tab_bar = make_tab_bar_colors(theme, overrides.window_background_opacity),
-			foreground = (desat > 0 and s.foreground) and wezterm.color.parse(s.foreground):desaturate(desat) or nil,
-			background = (desat > 0 and s.background) and wezterm.color.parse(s.background):desaturate(desat) or nil,
-			ansi = desaturate_list(s.ansi),
-			brights = desaturate_list(s.brights),
-		}
-	end
+	local opacity = (mode == "none") and opacity_max or opacity_active_window
+	overrides.window_background_opacity = opacity
+	overrides.colors = { tab_bar = make_tab_bar_colors(theme, opacity) }
+	overrides.inactive_pane_hsb = (
+		desaturate_inactive_panes
+		and desat_mode == "muted"
+		and globals.preview_theme == nil
+	)
+			and {
+				saturation = 1 - (desaturation_inactive_pane * 0.5),
+				brightness = brightness_inactive_pane,
+			}
+		or nil
 	window:set_config_overrides(overrides)
 end
-
-wezterm.on("window-focus-changed", function(window)
-	apply_opacity(window)
-end)
 
 wezterm.on("toggle-opacity", function(window)
 	wezterm.GLOBAL.transparency_mode = transparency_mode_cycle[wezterm.GLOBAL.transparency_mode]
