@@ -106,6 +106,8 @@ Use `Ctrl-h/j/k/l` to move through both Neovim splits and tmux panes. Use `Ctrl-
 
 ## WezTerm controls
 
+Press `Ctrl+T` to open a new WezTerm tab.
+
 On macOS, the WezTerm leader is `Shift-Cmd-L`. Press it, then the second key within two seconds:
 
 | Keys | Action |

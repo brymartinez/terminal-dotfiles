@@ -321,6 +321,7 @@ config.keys = {
 	{ key = "r", mods = "LEADER", action = act.RotatePanes("Clockwise") },
 
 	{ key = "t", mods = "CMD", action = act.SpawnCommandInNewTab({ args = new_pane_prog }) },
+	{ key = "t", mods = "CTRL", action = act.SpawnTab("CurrentPaneDomain") },
 	{ key = "n", mods = "CMD", action = act.SpawnCommandInNewWindow({ args = new_pane_prog }) },
 	{ key = "w", mods = "CMD", action = act.CloseCurrentPane({ confirm = false }) },
 
