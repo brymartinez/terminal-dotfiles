@@ -6,21 +6,24 @@ The base packages require GNU Stow, tmux, Zsh, and Neovim. fzf, LazyGit, Codex, 
 
 ## Install
 
-Install GNU Stow first, then run:
+On EndeavourOS or Arch Linux, run this as your regular user after cloning:
 
 ```sh
 git clone <repository-url> ~/dotfiles
 cd ~/dotfiles
 ./install.sh
-[ -e ~/.zshrc.local ] || cp zsh/.zshrc.local.example ~/.zshrc.local
 ```
+
+The script uses `sudo pacman -Syu --needed` to update the system and install WezTerm, its fonts, Neovim, and the tools used by the dotfiles. It then links the configs and installs Neovim plugins in headless mode.
+
+On macOS and other Linux distributions, install GNU Stow and your preferred tools before running the same script. Start Neovim once to install its plugins.
 
 The installer links the portable packages into `$HOME`. On macOS it also links the optional Aerospace and Karabiner package. It never uses `stow --adopt`.
 
 Existing conflicting files are left untouched and reported by Stow. Preview the links with:
 
 ```sh
-stow --simulate --restow --dir "$PWD" --target "$HOME" nvim tmux zsh wezterm bin
+stow --simulate --restow --dir "$PWD" --target "$HOME" nvim tmux zsh wezterm
 ```
 
 ## Package layout
@@ -30,7 +33,6 @@ stow --simulate --restow --dir "$PWD" --target "$HOME" nvim tmux zsh wezterm bin
 - `zsh` links `~/.zshrc`.
 - `wezterm` links `~/.wezterm.lua` and support files under `~/.config/wezterm`.
 - `macos` links Aerospace and Karabiner configuration on macOS only.
-- `bin` links helper commands under `~/.local/bin`.
 
 `~/.wezterm.lua` is the only WezTerm entrypoint. The files under `~/.config/wezterm` are support modules and scripts, not a second configuration entrypoint.
 
@@ -128,7 +130,6 @@ Stow creates symlinks from package paths into `$HOME`. For example:
 tmux/.tmux.conf              -> ~/.tmux.conf
 wezterm/.wezterm.lua         -> ~/.wezterm.lua
 nvim/.config/nvim             -> ~/.config/nvim
-bin/.local/bin/tmux-project  -> ~/.local/bin/tmux-project
 ```
 
 Editing a tracked file changes the live configuration immediately. Rerun `./install.sh` after adding or moving packages. Keep machine-specific settings in `~/.zshrc.local` rather than editing the tracked files.
