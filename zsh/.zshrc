@@ -5,15 +5,32 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
 fi
 
 export ZSH="${ZSH:-$HOME/.oh-my-zsh}"
-ZSH_THEME="powerlevel10k/powerlevel10k"
 plugins=(git)
 
 if [[ -r "$ZSH/oh-my-zsh.sh" ]]; then
+  if [[ -r "${ZSH_CUSTOM:-$ZSH/custom}/themes/powerlevel10k/powerlevel10k.zsh-theme" ]]; then
+    ZSH_THEME="powerlevel10k/powerlevel10k"
+  fi
   source "$ZSH/oh-my-zsh.sh"
+else
+  HISTFILE=${HISTFILE:-$HOME/.zsh_history}
+  HISTSIZE=10000
+  SAVEHIST=10000
+  setopt share_history
+  autoload -Uz compinit
+  compinit
+  PROMPT='%n@%m %~ %# '
 fi
 
-[[ ! -f "$HOME/.p10k.zsh" ]] || source "$HOME/.p10k.zsh"
+if (( $+functions[p10k] )); then
+  if [[ -r "$HOME/.p10k.zsh" ]]; then
+    source "$HOME/.p10k.zsh"
+  else
+    source "${ZSH_CUSTOM:-$ZSH/custom}/themes/powerlevel10k/config/p10k-lean.zsh"
+  fi
+fi
 
+export EDITOR="${EDITOR:-nvim}"
 alias vim='nvim'
 alias dcu='docker compose up'
 alias dcdv='docker compose down --volumes'
@@ -66,7 +83,7 @@ if [[ -d "/opt/homebrew/opt/libpq/bin" ]]; then
   export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
 fi
 
-if (( $+commands[fzf] )); then
+if [[ -t 0 && -o zle ]] && (( $+commands[fzf] )); then
   source <(fzf --zsh)
 fi
 

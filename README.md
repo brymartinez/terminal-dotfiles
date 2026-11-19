@@ -2,7 +2,7 @@
 
 Portable Neovim, tmux, Zsh, and WezTerm configuration managed with GNU Stow.
 
-The base packages require GNU Stow, tmux, Zsh, and Neovim. fzf, LazyGit, Codex, WezTerm, and TPM are optional integrations used by the richer workflow.
+The setup includes Zsh, WezTerm, Neovim, and tmux. Codex and TPM are optional integrations.
 
 ## Install
 
@@ -14,9 +14,9 @@ cd ~/dotfiles
 ./install.sh
 ```
 
-The script uses `sudo pacman -Syu --needed` to update the system and install WezTerm, its fonts, Neovim, and the tools used by the dotfiles. It then links the configs and installs Neovim plugins in headless mode.
+If any required package is missing, the script uses `sudo pacman -Syu --needed` to update the system and install the toolchain. It links the configs, installs Oh My Zsh, Powerlevel10k, Nerd Fonts and Neovim plugins, checks the WezTerm config, and sets Zsh as your account's login shell with `chsh`. Enter your password if prompted, then sign out and back in for the login-shell change to take effect. WezTerm starts a Zsh login shell in every new terminal.
 
-On macOS and other Linux distributions, install GNU Stow and your preferred tools before running the same script. Start Neovim once to install its plugins.
+On macOS and other Linux distributions, install GNU Stow, Git, Zsh, WezTerm, Neovim, tmux, curl, and unzip before running the same script. Install fzf for the WezTerm theme picker, and ripgrep, fd, LazyGit, jq, a C toolchain, tree-sitter-cli, Node.js, npm, and Go for the editor and its integrations.
 
 The installer links the portable packages into `$HOME`. On macOS it also links the optional Aerospace and Karabiner package. It never uses `stow --adopt`.
 
@@ -37,6 +37,10 @@ stow --simulate --restow --dir "$PWD" --target "$HOME" nvim tmux zsh wezterm
 `~/.wezterm.lua` is the only WezTerm entrypoint. The files under `~/.config/wezterm` are support modules and scripts, not a second configuration entrypoint.
 
 ## Local configuration
+
+The Zsh config enables the Oh My Zsh Git plugin, including `gst` for `git status`. Powerlevel10k loads your `~/.p10k.zsh` if present and uses its bundled Lean preset by default. Run `p10k configure` to customize it.
+
+WezTerm uses FiraCode Nerd Font at 14 pt with JetBrainsMono Nerd Font and Symbols Nerd Font Mono as fallbacks. The installer places all three in your user font directory.
 
 Keep secrets, project aliases, theme overrides, and machine-specific paths in `~/.zshrc.local`. That file is ignored by Git. The tracked shell configuration only loads it when present.
 
@@ -140,6 +144,7 @@ Editing a tracked file changes the live configuration immediately. Rerun `./inst
 sh -n install.sh
 zsh -n zsh/.zshrc
 tmux -L dotfiles-check -f tmux/.tmux.conf new-session -d -s dotfiles-check
-nvim --headless --clean -u nvim/.config/nvim/init.lua '+qa'
+wezterm --config-file "$PWD/wezterm/.wezterm.lua" ls-fonts >/dev/null
+nvim --headless '+lua print(vim.g.colors_name)' +qa
 tmux -L dotfiles-check kill-server 2>/dev/null || true
 ```

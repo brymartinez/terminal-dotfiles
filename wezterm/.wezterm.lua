@@ -29,10 +29,12 @@ local aerospace_bin = is_macos and find_executable("aerospace") or nil
 
 -- Preferences ------------------------------------------------------------
 config.font = wezterm.font_with_fallback({
-	{ family = "Fira Code", weight = "Regular" },
+	"FiraCode Nerd Font",
+	"JetBrainsMono Nerd Font",
 	"Symbols Nerd Font Mono",
+	"monospace",
 })
-config.font_size = 13
+config.font_size = 14
 config.harfbuzz_features = { "calt=1", "clig=1", "liga=1" }
 
 -- Window
@@ -41,7 +43,7 @@ config.initial_rows = 28
 config.max_fps = 120
 config.adjust_window_size_when_changing_font_size = false
 config.window_close_confirmation = "NeverPrompt"
-config.window_decorations = "RESIZE"
+config.window_decorations = "NONE"
 config.default_cursor_style = "SteadyBar"
 config.automatically_reload_config = true
 config.text_background_opacity = 0.3
@@ -57,11 +59,9 @@ local opacity_tab_bar = 0
 local opacity_active_tab = 0.6
 local opacity_max = 0.999 -- macOS draws a thin white border at exactly 1.0
 
--- non-login shell for new tabs, panes, and windows;
--- any settings from .zprofile are inherited, but it is not sourced again
--- startup gets the OS default (login shell)
--- Change to { "/bin/zsh", "-l" } for login shells
-local new_pane_prog = { "/bin/zsh" }
+-- Use a Zsh login shell for startup and subsequent tabs, windows, and panes.
+local new_pane_prog = { find_executable("zsh") or "/bin/zsh", "-l" }
+config.default_prog = new_pane_prog
 -- where do *_THEME env vars live? This script will not add them, only update them if they exist
 local shell_rc = wezterm.home_dir .. "/.zshrc.local"
 
@@ -69,6 +69,7 @@ local shell_rc = wezterm.home_dir .. "/.zshrc.local"
 local path_prefix = is_macos and "/opt/homebrew/bin:/usr/local/bin:" or ""
 config.set_environment_variables = {
 	PATH = path_prefix .. (os.getenv("PATH") or ""),
+	SHELL = new_pane_prog[1],
 }
 
 config.enable_kitty_graphics = true -- view images in markdown (nvim)
@@ -124,7 +125,8 @@ local function read_wezterm_theme()
 end
 
 local function active_theme()
-	return globals.preview_theme or read_wezterm_theme() or globals.current_theme
+	local theme = globals.preview_theme or read_wezterm_theme() or globals.current_theme
+	return builtin_schemes[theme] and theme or fallback_theme
 end
 
 local function theme_switcher(window, pane)
@@ -174,11 +176,12 @@ local function is_nvim(pane)
 end
 
 local function is_fzf(pane)
-	return pane:get_user_vars().IS_FZF == "true" or pane:get_foreground_process_name():find("fzf$")
+	return pane:get_user_vars().IS_FZF == "true" or (pane:get_foreground_process_name() or ""):find("fzf$")
 end
 
 local function is_passthrough(pane, key)
-	if is_nvim(pane) then
+	local process = pane:get_foreground_process_name() or ""
+	if process:match("/tmux$") or is_nvim(pane) then
 		return true
 	end
 	-- In fzf, only pass through ctrl+j/k (up/down navigation)
@@ -196,10 +199,7 @@ local edit_config = act.SpawnCommandInNewTab({
 		string.format(
 			"sleep 0.1"
 				.. " && wezterm cli set-tab-title 'config'"
-				.. " && if command -v chezmoi >/dev/null 2>&1;"
-				.. " then chezmoi edit --apply %q;"
-				.. " else ${EDITOR:-vi} %q; fi",
-			wezterm.config_file,
+				.. ' && exec "${EDITOR:-nvim}" %q',
 			wezterm.config_file
 		),
 	},
@@ -239,8 +239,8 @@ local function split_nav(resize_or_move, mods, key, dir)
 					end
 				end
 				if is_zoomed then
-					dir = (dir == "Up" or dir == "Right") and "Next" or "Prev"
-					win:perform_action({ ActivatePaneDirection = dir }, pane)
+					local direction = (dir == "Up" or dir == "Right") and "Next" or "Prev"
+					win:perform_action({ ActivatePaneDirection = direction }, pane)
 					win:perform_action({ SetPaneZoomState = is_zoomed }, pane)
 				else
 					local at_edge = true
@@ -267,6 +267,8 @@ local function split_nav(resize_or_move, mods, key, dir)
 					if at_edge then
 						if aerospace_bin then
 							wezterm.run_child_process({ aerospace_bin, "focus", dir:lower() })
+						else
+							win:perform_action(act.SendKey({ key = key, mods = mods }), pane)
 						end
 					else
 						win:perform_action({ ActivatePaneDirection = dir }, pane)
@@ -412,8 +414,7 @@ local function apply_opacity(window)
 	overrides.window_background_opacity = opacity
 	overrides.colors = { tab_bar = make_tab_bar_colors(theme, opacity) }
 	overrides.inactive_pane_hsb = (
-		desaturate_inactive_panes
-		and desat_mode == "muted"
+		desat_mode == "muted"
 		and globals.preview_theme == nil
 	)
 			and {
